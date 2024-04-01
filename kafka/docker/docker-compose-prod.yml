@@ -9,6 +9,11 @@ services:
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - kafka-network
+    volumes:
+      - ./storage/prod/lib/zookeeper:/var/lib/zookeeper
+      
   kafka:
     image: confluentinc/cp-kafka:6.2.0
     hostname: broker
@@ -30,6 +35,11 @@ services:
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_JMX_PORT: 9101
       KAFKA_JMX_HOSTNAME: localhost
+    volumes:
+      - ./storage/prod/lib/kafka:/var/lib/kafka
+    networks:
+    - kafka-network
+
   kafdrop:
     image: obsidiandynamics/kafdrop
     restart: "no"
@@ -37,6 +47,13 @@ services:
       - "9007:9000"
     environment:
       KAFKA_BROKERCONNECT: "kafka:29092"
-      JVM_OPTS: "-Xms16M -Xmx48M -Xss180K -XX:-TieredCompilation -XX:+UseStringDeduplication -noverify"
+      # Stack size was increase from -Xss128K to Xss512K due to launching JVM errors
+      JVM_OPTS: "-Xms16M -Xmx48M -Xss512K -XX:-TieredCompilation -XX:+UseStringDeduplication -noverify"
     depends_on:
       - "kafka"
+    networks:
+      - kafka-network
+
+networks:
+  kafka-network:
+    driver: bridge
