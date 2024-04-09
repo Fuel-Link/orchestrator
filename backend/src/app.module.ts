@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { VehicleInfoModule } from './vehicle-info/vehicle-info.module';
 
 @Module({
   imports: [
@@ -15,7 +16,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       entities: [],
       synchronize: true,
       autoLoadEntities: true,
-    })
+    }),
+    VehicleInfoModule
   ],
   controllers: [AppController],
   providers: [AppService],
