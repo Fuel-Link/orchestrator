@@ -39,7 +39,7 @@ export class VehicleInfoController {
 
 
     @Post()
-    async postVehicle(@Body() vehicle: {plate:string, owner:string, fuel:string, photo:string},@Req() request: Request, @Headers() headers: { authorization: string }) {
+    async postVehicle(@Body() vehicle:{plate:string, fuel:string, type:string,model:string,brand:string, color:string},@Req() request: Request, @Headers() headers: { authorization: string }) {
     
         let api = {
             op: 'Post Vehicle',

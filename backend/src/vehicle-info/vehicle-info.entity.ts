@@ -9,12 +9,20 @@ export class VehicleInfo {
   public plate: string;
 
   @Column({ type: 'varchar', length: 120 })
-  public owner: string;
-
-  @Column({ type: 'varchar', length: 120 })
   public fuel: string;
 
   @Column({ type: 'varchar', length: 120 })
-  public photo: string;
+  public type: string;
+
+  @Column({ type: 'varchar', length: 120 })
+  public model: string;
+
+  @Column({ type: 'varchar', length: 120 })
+  public brand: string;
+
+  @Column({ type: 'varchar', length: 120 })
+  public color: string;
+
+
 
 }
