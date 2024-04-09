@@ -4,7 +4,7 @@ import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne, JoinColum
 @Entity()
 export class Users {
   @PrimaryGeneratedColumn()
-  public id!: number;
+  public user_id!: number;
 
   @Column({ type: 'varchar', length: 120 })
   public username: string;

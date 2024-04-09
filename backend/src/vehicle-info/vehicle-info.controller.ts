@@ -37,6 +37,16 @@ export class VehicleInfoController {
  
     }
 
+    @Get('/plate')
+    async getPlate(@Query('plate') plate : string) {
+        try{
+           return await this.vehicleservice.findVehicle(plate) 
+        }catch(e){
+            console.log(e)
+            return "Get Vehicle failed";
+        }   
+    }
+
 
     @Post()
     async postVehicle(@Body() vehicle:{plate:string, fuel:string, type:string,model:string,brand:string, color:string},@Req() request: Request, @Headers() headers: { authorization: string }) {

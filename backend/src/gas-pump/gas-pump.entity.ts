@@ -4,7 +4,7 @@ import { VehicleInfo } from 'src/vehicle-info/vehicle-info.entity';
 @Entity()
 export class GasPump {
   @PrimaryGeneratedColumn()
-  public id!: number;
+  public gaspump_id!: number;
 
   @Column({ type: 'varchar', length: 120 })
   public fuel: string;

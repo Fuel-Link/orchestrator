@@ -14,7 +14,7 @@ export class FuelMovementsService {
         return await this.repository.manager.query('Select * from "fuel_movements"');
     }
 
-    async save( movement:{plate:string, liters:string, gaspump_id:number,user_id:number, date:string}) {
+    async save( movement:{plate:number, liters:string, gaspump_id:number,user_id:number, date:string}) {
         return await this.repository.save(movement);
     }
 
@@ -23,5 +23,11 @@ export class FuelMovementsService {
         return await this.repository.delete(id);
     }
 
+    async findMovement(plateSearched: number) {
+        return await this.repository.find({
+            loadRelationIds: true,
+            where: { plate: plateSearched }
+        });
+    }
 
 }

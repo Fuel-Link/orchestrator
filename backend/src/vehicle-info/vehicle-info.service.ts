@@ -20,4 +20,10 @@ export class VehicleInfoService {
         return await this.repository.delete(id);
     }
 
+    async findVehicle(plateSearched: string) {
+        return await this.repository.find({
+            loadRelationIds: true,
+            where: { plate: plateSearched }
+        });
+    }
 }

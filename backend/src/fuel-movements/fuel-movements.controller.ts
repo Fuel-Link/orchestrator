@@ -39,10 +39,20 @@ export class FuelMovementsController {
  
     }
 
-    
+
+    @Get('/plate')
+    async getPlate(@Query('plate') plate : number) {
+        try{
+           return await this.movementsservice.findMovement(plate) 
+        }catch(e){
+            console.log(e)
+            return "Get Plate failed";
+        }   
+    }
+
 
     @Post()
-    async postMovement(@Body() movement:{plate:string, liters:string, gaspump_id:number,user_id:number, date:string},@Req() request: Request, @Headers() headers: { authorization: string }) {
+    async postMovement(@Body() movement:{plate:number, liters:string, gaspump_id:number,user_id:number, date:string},@Req() request: Request, @Headers() headers: { authorization: string }) {
     
         let api = {
             op: 'Post Fuel Movement',
