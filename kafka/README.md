@@ -35,7 +35,7 @@ docker compose down
 docker run -it --rm confluentinc/cp-kafka /bin/kafka-topics --create --topic <TOPIC> --bootstrap-server <HOST_IP_ADDRESS>:29092
 
 # In development environment
-docker run -it --rm --network=kafka-network confluentinc/cp-kafka /bin/kafka-topics --create --topic hello-world --bootstrap-server 192.168.68.111:29092
+docker run -it --rm --network=host confluentinc/cp-kafka /bin/kafka-topics --create --topic hello-world --bootstrap-server localhost:9092
 ```
 
 ![kafka possible commands](image.png)
@@ -47,7 +47,7 @@ docker run -it --rm --network=kafka-network confluentinc/cp-kafka /bin/kafka-top
 docker run -it --rm confluentinc/cp-kafka /bin/kafka-console-consumer --bootstrap-server <HOST_IP_ADDRESS>:29092 --topic <TOPIC>
 
 # In development environment
-docker run --rm --network=kafka-network confluentinc/cp-kafka:6.2.0 kafka-console-consumer --bootstrap-server 192.168.68.111:29092 --topic hello-world
+docker run --rm --network=host confluentinc/cp-kafka:6.2.0 kafka-console-consumer --bootstrap-server localhost:9092 --topic hello-world
 ```
 
 * Flag `--from-beginning` can be used to obtain all messages sent to the system
@@ -59,7 +59,7 @@ docker run --rm --network=kafka-network confluentinc/cp-kafka:6.2.0 kafka-consol
 docker run -it --rm confluentinc/cp-kafka /bin/kafka-console-producer --bootstrap-server <HOST_IP_ADDRESS>:29092 --topic <TOPIC>
 
 # In development environment
-docker run -it --rm --network=kafka-network confluentinc/cp-kafka /bin/kafka-console-producer --bootstrap-server 192.168.68.111:29092 --topic hello-world
+docker run -it --rm --network=host confluentinc/cp-kafka /bin/kafka-console-producer --bootstrap-server localhost:9092 --topic hello-world
 ```
 
 ### Launch the Kafka cluster monitoring tool
