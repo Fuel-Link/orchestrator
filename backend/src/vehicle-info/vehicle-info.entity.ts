@@ -1,11 +1,9 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, PrimaryColumn } from 'typeorm';
 
 @Entity()
 export class VehicleInfo {
-  @PrimaryGeneratedColumn()
-  public id!: number;
 
-  @Column({ type: 'varchar', length: 6 })
+  @PrimaryColumn()
   public plate: string;
 
   @Column({ type: 'varchar', length: 120 })

@@ -10,7 +10,7 @@ export class FuelMovements {
 
   @ManyToOne(()=>VehicleInfo)
   @JoinColumn({name: 'plate'})
-  public plate: number;
+  public plate: string;
 
   @Column({ type: 'varchar', length: 120 })
   public liters: string;
