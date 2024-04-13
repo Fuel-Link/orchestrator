@@ -76,3 +76,4 @@ After, the Web Ui can be acessed at `localhost:9080`
 
 * https://medium.com/@Wajahat_Hussain_/a-comprehensive-guide-to-getting-started-with-apache-kafka-using-docker-61cc27e1ffb0
 * https://www.youtube.com/watch?v=uvb00oaa3k8
+* https://kafka.apache.org/37/documentation/streams/tutorial
