@@ -95,7 +95,9 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: ignored
     #command: "bash -c"
     # We need to make sure that kafka is ready and the topics have been created before starting the stream
-    command: "mvn exec:java -Dexec.mainClass=applications.WordCount"
+    command: "bash -c 'echo Waiting for Kafka to be ready... && \
+                sh check_topics.sh && \
+                mvn exec:java -Dexec.mainClass=applications.WordCount'"
 
 # Only use external network in development environment
 networks:
