@@ -1,16 +1,11 @@
 package applications;
 
 import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
-import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Produced;
-import org.apache.kafka.streams.processor.AbstractProcessor;
-import org.apache.kafka.streams.processor.ProcessorContext;
-import org.apache.kafka.streams.state.KeyValueStore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
@@ -28,8 +23,43 @@ public class PlateRecognizer {
 
         final StreamsBuilder builder = new StreamsBuilder();
 
+        ObjectMapper mapper = new ObjectMapper();
+
         builder.<String, String>stream("imageCaptured")
-                .process(() -> new JsonProcessor("plateRecognized"));
+                .mapValues(value -> {
+                    try {
+                        JsonNode jsonNode = mapper.readTree(value);
+                        JsonNode imageCaptured = jsonNode.path("value").path("imageCaptured");
+                        if (imageCaptured.isMissingNode()) {
+                            // Ignore messages without 'imageCaptured' field
+                            return null;
+                        }
+                        JsonNode properties = imageCaptured.path("properties");
+                        if (properties.isMissingNode()) {
+                            // Ignore messages without 'properties' field
+                            return null;
+                        }
+                        JsonNode timestampNode = properties.path("timestamp").path("value");
+                        JsonNode imageIdNode = properties.path("imageId").path("properties").path("value");
+                        JsonNode urlNode = properties.path("url").path("properties").path("value");
+
+                        String timestamp = timestampNode.isMissingNode() ? "" : timestampNode.asText();
+                        String imageId = imageIdNode.isMissingNode() ? "" : imageIdNode.asText();
+                        String url = urlNode.isMissingNode() ? "" : urlNode.asText();
+
+                        JsonNode result = mapper.createObjectNode()
+                                .put("timestamp", timestamp)
+                                .put("imageId", imageId)
+                                .put("url", url);
+
+                        return result.toString();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        return null;
+                    }
+                })
+                .filter((key, value) -> value != null)
+                .to("plateRecognized", Produced.with(Serdes.String(), Serdes.String()));
 
         final Topology topology = builder.build();
         final KafkaStreams streams = new KafkaStreams(topology, props);
@@ -51,41 +81,5 @@ public class PlateRecognizer {
             System.exit(1);
         }
         System.exit(0);
-    }
-
-    static class JsonProcessor extends AbstractProcessor<String, String> {
-        private final String outputTopic;
-        private final ObjectMapper mapper;
-        private ProcessorContext context;
-
-        public JsonProcessor(String outputTopic) {
-            this.outputTopic = outputTopic;
-            this.mapper = new ObjectMapper();
-        }
-
-        @Override
-        public void init(ProcessorContext context) {
-            this.context = context;
-        }
-
-        @Override
-        public void process(String key, String value) {
-            try {
-                JsonNode jsonNode = mapper.readTree(value);
-                JsonNode imageCaptured = jsonNode.path("value").path("imageCaptured");
-                String timestamp = imageCaptured.path("properties").path("timestamp").path("value").asText();
-                String imageId = imageCaptured.path("properties").path("imageId").path("properties").path("value").asText();
-                String url = imageCaptured.path("properties").path("url").path("properties").path("value").asText();
-
-                JsonNode result = mapper.createObjectNode()
-                        .put("timestamp", timestamp)
-                        .put("imageId", imageId)
-                        .put("url", url);
-
-                context.forward(key, result.toString());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
     }
 }
