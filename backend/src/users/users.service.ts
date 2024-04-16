@@ -23,4 +23,10 @@ export class UsersService {
         return await this.repository.delete(id);
     }
 
+    async findId(idSearched: number) {
+        return await this.repository.find({
+            loadRelationIds: true,
+            where: { user_id: idSearched }
+        });
+    }
 }

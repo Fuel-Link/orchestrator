@@ -96,4 +96,14 @@ export class UsersController {
         return this.res;
         
     }
+
+    @Get('/id')
+    async getId(@Query('id') id : number) {
+        try{
+           return await this.userservice.findId(id) 
+        }catch(e){
+            console.log(e)
+            return "Get User failed";
+        }   
+    }
 }
