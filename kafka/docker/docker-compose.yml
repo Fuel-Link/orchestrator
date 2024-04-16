@@ -93,13 +93,11 @@ services:
     environment:
       KAFKA_BROKER_ID: ignored
       KAFKA_ZOOKEEPER_CONNECT: ignored
-    #command: "bash -c"
     # We need to make sure that kafka is ready and the topics have been created before starting the stream
-    # mvn exec:java -Dexec.mainClass=applications.PlateRecognizer && \
     command: "bash -c 'echo Waiting for Kafka to be ready... && \
+                cub kafka-ready -b kafka:29092 1 20 && \
                 sh check_topics.sh && \
-                mvn exec:java -Dexec.mainClass=applications.PlateRecognizer && \
-                mvn exec:java -Dexec.mainClass=applications.WordCount'"
+                mvn exec:java -Dexec.mainClass=applications.PlateRecognizer'"
 
 # Only use external network in development environment
 networks:
