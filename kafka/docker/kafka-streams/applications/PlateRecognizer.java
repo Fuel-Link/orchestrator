@@ -11,8 +11,23 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import java.io.InputStream;
+
+import org.apache.commons.io.IOUtils;
+import java.io.ByteArrayInputStream;
+
+import applications.token;
 
 public class PlateRecognizer {
+
+    private static final String IMAGE_CAPTURED_TOPIC = "imageCaptured";
+    private static final String PLATE_RECOGNIZED_TOPIC = "plateRecognized";
+    private static String lastUrl = "";
 
     public static void main(String[] args) {
         Properties props = new Properties();
@@ -25,11 +40,11 @@ public class PlateRecognizer {
 
         ObjectMapper mapper = new ObjectMapper();
 
-        builder.<String, String>stream("imageCaptured")
+        builder.<String, String>stream(IMAGE_CAPTURED_TOPIC)
                 .mapValues(value -> {
                     try {
                         JsonNode jsonNode = mapper.readTree(value);
-                        JsonNode imageCaptured = jsonNode.path("value").path("imageCaptured");
+                        JsonNode imageCaptured = jsonNode.path("value").path(IMAGE_CAPTURED_TOPIC);
                         if (imageCaptured.isMissingNode()) {
                             // Ignore messages without 'imageCaptured' field
                             return null;
@@ -47,19 +62,52 @@ public class PlateRecognizer {
                         String imageId = imageIdNode.isMissingNode() ? "" : imageIdNode.asText();
                         String url = urlNode.isMissingNode() ? "" : urlNode.asText();
 
-                        JsonNode result = mapper.createObjectNode()
-                                .put("timestamp", timestamp)
-                                .put("imageId", imageId)
-                                .put("url", url);
+                        // Stop from posting on the update when the URL is processed
+                        if(url.equals(lastUrl)) {
+                            return null;
+                        }
 
-                        return result.toString();
+                        lastUrl = url;
+
+                        // Make HTTP request to fetch image
+                        CloseableHttpClient httpClient = HttpClients.createDefault();
+                        HttpGet httpGet = new HttpGet(url);
+
+                        try {
+                            HttpResponse response = httpClient.execute(httpGet);
+                            HttpEntity entity = response.getEntity();
+
+                            if (entity != null) {
+                                try (InputStream inputStream = entity.getContent()) {
+                                    // Read the image bytes into a byte array
+                                    byte[] imageBytes = IOUtils.toByteArray(inputStream);
+
+                                    // Calculate the size of the image in bytes
+                                    int imageSize = imageBytes.length;
+                                    System.out.println("Image fetched successfully. Size: " + imageSize + " bytes");
+
+                                    JsonNode result = mapper.createObjectNode()
+                                            .put("timestamp", timestamp)
+                                            .put("imageId", imageId)
+                                            .put("url", url);
+
+                                    return result.toString();
+                                }
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        } finally {
+                            httpClient.close();
+                        }
+
+                        return null;
                     } catch (IOException e) {
                         e.printStackTrace();
                         return null;
                     }
                 })
                 .filter((key, value) -> value != null)
-                .to("plateRecognized", Produced.with(Serdes.String(), Serdes.String()));
+                .to(PLATE_RECOGNIZED_TOPIC, Produced.with(Serdes.String(), Serdes.String()));
 
         final Topology topology = builder.build();
         final KafkaStreams streams = new KafkaStreams(topology, props);

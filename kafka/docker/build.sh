@@ -1,4 +1,5 @@
 #!/bin/sh
+docker compose down
 
 # Variables
 baseKafkaStream="kafka-streams_base-application"
@@ -27,4 +28,4 @@ fi
 
 # Start the docker-compose
 cd ../../
-docker-compose up 
+docker-compose up --remove-orphans
