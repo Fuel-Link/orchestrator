@@ -16,17 +16,22 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.util.EntityUtils;
 import java.io.InputStream;
-
 import org.apache.commons.io.IOUtils;
 import java.io.ByteArrayInputStream;
+import java.util.UUID;
 
-import applications.token;
+import applications.Token;
 
 public class PlateRecognizer {
 
     private static final String IMAGE_CAPTURED_TOPIC = "imageCaptured";
     private static final String PLATE_RECOGNIZED_TOPIC = "plateRecognized";
+    private static final String PLATE_RECOGNIZER_URL = "https://api.platerecognizer.com/v1/plate-reader/";
     private static String lastUrl = "";
 
     public static void main(String[] args) {
@@ -63,11 +68,13 @@ public class PlateRecognizer {
                         String url = urlNode.isMissingNode() ? "" : urlNode.asText();
 
                         // Stop from posting on the update when the URL is processed
+                        /*
                         if(url.equals(lastUrl)) {
                             return null;
                         }
 
                         lastUrl = url;
+                        */
 
                         // Make HTTP request to fetch image
                         CloseableHttpClient httpClient = HttpClients.createDefault();
@@ -85,6 +92,35 @@ public class PlateRecognizer {
                                     // Calculate the size of the image in bytes
                                     int imageSize = imageBytes.length;
                                     System.out.println("Image fetched successfully. Size: " + imageSize + " bytes");
+
+                                    // Process the image using the Plate Recognizer API
+                                    HttpPost httpPost = new HttpPost(PLATE_RECOGNIZER_URL);
+
+                                    // Set headers
+                                    httpPost.setHeader("Authorization", Token.token);
+
+                                    // Prepare the body
+                                    MultipartEntityBuilder builderPost = MultipartEntityBuilder.create();
+                                    builderPost.addBinaryBody("upload", imageBytes, ContentType.APPLICATION_OCTET_STREAM, imageId + ".jpg");
+                                    builderPost.addTextBody("regions", "pt");
+                                    //builder.addTextBody("timestamp", "2019-08-19T13:11:25");
+
+                                    HttpEntity multipart = builderPost.build();
+                                    httpPost.setEntity(multipart);
+
+                                    // Execute the request
+                                    HttpResponse responsePost = httpClient.execute(httpPost);
+                                    HttpEntity responseEntity = responsePost.getEntity();
+
+                                    // Handle the response
+                                    if (responseEntity != null) {
+                                        InputStream responseStream = responseEntity.getContent();
+                                        String responseBody = EntityUtils.toString(responseEntity);
+                                        System.out.println("Plate recognizer API response: " + responseBody);
+                                        responseStream.close();
+                                    } else {
+                                        System.out.println("Plate recognizer API response is empty");
+                                    }
 
                                     JsonNode result = mapper.createObjectNode()
                                             .put("timestamp", timestamp)
