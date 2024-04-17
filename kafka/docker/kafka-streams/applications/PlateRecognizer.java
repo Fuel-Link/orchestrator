@@ -22,8 +22,6 @@ import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.util.EntityUtils;
 import java.io.InputStream;
 import org.apache.commons.io.IOUtils;
-import java.io.ByteArrayInputStream;
-import java.util.UUID;
 
 import applications.Token;
 
@@ -32,7 +30,8 @@ public class PlateRecognizer {
     private static final String IMAGE_CAPTURED_TOPIC = "imageCaptured";
     private static final String PLATE_RECOGNIZED_TOPIC = "plateRecognized";
     private static final String PLATE_RECOGNIZER_URL = "https://api.platerecognizer.com/v1/plate-reader/";
-    private static String lastUrl = "";
+    private static String lastImageUrl = "";
+    private static String lastPlateId = "";
 
     public static void main(String[] args) {
         Properties props = new Properties();
@@ -68,13 +67,13 @@ public class PlateRecognizer {
                         String url = urlNode.isMissingNode() ? "" : urlNode.asText();
 
                         // Stop from posting on the update when the URL is processed
-                        /*
-                        if(url.equals(lastUrl)) {
+                        
+                        if(url.equals(lastImageUrl) && imageId.equals(lastPlateId)) {
                             return null;
                         }
 
-                        lastUrl = url;
-                        */
+                        lastImageUrl = url;
+                        
 
                         // Make HTTP request to fetch image
                         CloseableHttpClient httpClient = HttpClients.createDefault();
@@ -114,20 +113,36 @@ public class PlateRecognizer {
 
                                     // Handle the response
                                     if (responseEntity != null) {
-                                        InputStream responseStream = responseEntity.getContent();
                                         String responseBody = EntityUtils.toString(responseEntity);
-                                        System.out.println("Plate recognizer API response: " + responseBody);
-                                        responseStream.close();
+                                        JsonNode jsonResponse = mapper.readTree(responseBody);
+                                        JsonNode resultsNode = jsonResponse.path("results");
+
+                                        System.out.println("Plate recognizer API response: " + jsonResponse.toString());
+
+                                        // Check if the 'results' array is empty
+                                        if(resultsNode.isMissingNode()){
+                                            System.out.println("The received response from PlateRecognizer API isn't according to protocol (missing results field)");
+                                            return null;
+                                        }
+
+                                        if(resultsNode.toString().equals("")){
+                                            System.out.println("The image didn't contain a plate");
+                                            return null;
+                                        }
+                                            
+                                        // Plate recognized, send to topic
+                                        System.out.println("Plate recognized. Sending message to plateRecognized topic.");
+                                        JsonNode result = mapper.createObjectNode()
+                                                .put("timestamp", timestamp)
+                                                .put("imageId", imageId)
+                                                .put("results", resultsNode.toString());
+                                        
+                                        lastPlateId = imageId;
+
+                                        return result.toString();
                                     } else {
                                         System.out.println("Plate recognizer API response is empty");
                                     }
-
-                                    JsonNode result = mapper.createObjectNode()
-                                            .put("timestamp", timestamp)
-                                            .put("imageId", imageId)
-                                            .put("url", url);
-
-                                    return result.toString();
                                 }
                             }
                         } catch (Exception e) {

@@ -21,6 +21,9 @@ RUN mvn archetype:generate \
 
 WORKDIR "/app/kafka-streams"
 
+# Temporarily cache most dependencies
+RUN mvn clean package
+
 # Remove previous examples
 RUN rm src/main/java/applications/*.java
 
