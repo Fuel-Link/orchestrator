@@ -331,7 +331,8 @@ Taking this information into account, the message format of the data place into 
 {
     "timestamp": timestamp,
     "imageId": int,
-    "results": results
+    "results": results,
+    "thingId": String
 }
 ```
 

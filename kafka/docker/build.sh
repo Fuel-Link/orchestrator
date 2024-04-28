@@ -28,4 +28,4 @@ fi
 
 # Start the docker-compose
 cd ../../
-docker-compose up --remove-orphans
+docker-compose up #--remove-orphans

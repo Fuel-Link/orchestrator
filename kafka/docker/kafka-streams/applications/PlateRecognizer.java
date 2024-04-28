@@ -51,24 +51,35 @@ public class PlateRecognizer {
                         JsonNode imageCaptured = jsonNode.path("value").path(IMAGE_CAPTURED_TOPIC);
                         if (imageCaptured.isMissingNode()) {
                             // Ignore messages without 'imageCaptured' field
+                            System.out.println("The received message isn't according to protocol (missing imageCaptured field)");
                             return null;
                         }
                         JsonNode properties = imageCaptured.path("properties");
                         if (properties.isMissingNode()) {
                             // Ignore messages without 'properties' field
+                            System.out.println("The received message isn't according to protocol (missing properties field)");
                             return null;
                         }
+                        JsonNode extra = jsonNode.path("extra");
+                        if (extra.isMissingNode()) {
+                            // Ignore messages without 'extra' field
+                            System.out.println("The received message isn't according to protocol (missing extra field)");
+                            return null;
+                        }
+                        JsonNode thingIdNode = extra.path("thingId");
                         JsonNode timestampNode = properties.path("timestamp").path("value");
                         JsonNode imageIdNode = properties.path("imageId").path("properties").path("value");
                         JsonNode urlNode = properties.path("url").path("properties").path("value");
 
+                        String thingId = thingIdNode.isMissingNode() ? "" : thingIdNode.asText();
                         String timestamp = timestampNode.isMissingNode() ? "" : timestampNode.asText();
                         String imageId = imageIdNode.isMissingNode() ? "" : imageIdNode.asText();
                         String url = urlNode.isMissingNode() ? "" : urlNode.asText();
 
-                        // Stop from posting on the update when the URL is processed
-                        
-                        if(url.equals(lastImageUrl) && imageId.equals(lastPlateId)) {
+                        System.out.println("Image captured. Timestamp: " + timestamp + ", Image ID: " + imageId + ", URL: " + url);
+
+                        // Stop from posting on the update when the URL is processed                      
+                        if(url.equals(lastImageUrl)) {
                             return null;
                         }
 
@@ -91,6 +102,12 @@ public class PlateRecognizer {
                                     // Calculate the size of the image in bytes
                                     int imageSize = imageBytes.length;
                                     System.out.println("Image fetched successfully. Size: " + imageSize + " bytes");
+
+                                    /*if(imageId.equals(lastPlateId)) {
+                                        return null;
+                                    }
+                                    
+                                    lastPlateId = imageId;*/
 
                                     // Process the image using the Plate Recognizer API
                                     HttpPost httpPost = new HttpPost(PLATE_RECOGNIZER_URL);
@@ -125,7 +142,7 @@ public class PlateRecognizer {
                                             return null;
                                         }
 
-                                        if(resultsNode.toString().equals("")){
+                                        if(resultsNode.toString().equals("[]")){
                                             System.out.println("The image didn't contain a plate");
                                             return null;
                                         }
@@ -135,9 +152,8 @@ public class PlateRecognizer {
                                         JsonNode result = mapper.createObjectNode()
                                                 .put("timestamp", timestamp)
                                                 .put("imageId", imageId)
+                                                .put("thingId", thingId)
                                                 .put("results", resultsNode.toString());
-                                        
-                                        lastPlateId = imageId;
 
                                         return result.toString();
                                     } else {
