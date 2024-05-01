@@ -5,7 +5,7 @@ import { Repository } from 'typeorm';
 
 @Injectable()
 export class FuelMovementsService {
-
+    
     @InjectRepository(FuelMovements)
     private readonly repository : Repository<FuelMovements>;
 

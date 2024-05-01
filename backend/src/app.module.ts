@@ -6,6 +6,7 @@ import { VehicleInfoModule } from './vehicle-info/vehicle-info.module';
 import { FuelMovementsModule } from './fuel-movements/fuel-movements.module';
 import { GasPumpModule } from './gas-pump/gas-pump.module';
 import { UsersModule } from './users/users.module';
+import { KafkaCommunicationModule } from './kafka-communication/kafka-communication.module';
 
 @Module({
   imports: [
@@ -23,7 +24,8 @@ import { UsersModule } from './users/users.module';
     VehicleInfoModule,
     FuelMovementsModule,
     GasPumpModule,
-    UsersModule
+    UsersModule,
+    KafkaCommunicationModule
   ],
   controllers: [AppController],
   providers: [AppService],
