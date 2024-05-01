@@ -5,6 +5,8 @@ COPY PlateRecognizer.java src/main/java/applications/PlateRecognizer.java
 COPY WordCount.java src/main/java/applications/WordCount.java
 copy Token.java src/main/java/applications/Token.java
 
+RUN yum install -y dos2unix && dos2unix add_mvn_dependency.sh
+
 # Add JSON processing library
 RUN ["sh", "add_mvn_dependency.sh", "com.fasterxml.jackson.core", "jackson-databind", "2.12.5"]
 
