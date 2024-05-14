@@ -9,3 +9,5 @@ Please check the `docker` directory for indication on how to operate kafka.
 * https://medium.com/@Wajahat_Hussain_/a-comprehensive-guide-to-getting-started-with-apache-kafka-using-docker-61cc27e1ffb0
 * https://www.youtube.com/watch?v=uvb00oaa3k8
 * https://kafka.apache.org/37/documentation/streams/tutorial
+* https://github.com/wurstmeister/kafka-docker/wiki/Connectivity
+* https://stackoverflow.com/questions/72435550/confluent-cloud-add-basic-auth-to-kafka-rest-proxy-docker-container
