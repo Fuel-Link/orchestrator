@@ -3,7 +3,18 @@
 set -e  # Exit on failure
 
 # Replace with your desired topic names
-topics=(hello-world imageCaptured plateRecognized streams-plaintext-input streams-wordcount-output)
+topics=(
+  hello-world 
+  imageCaptured 
+  plateRecognized 
+  streams-plaintext-input 
+  streams-wordcount-output 
+  pump_init 
+  authorize_supply
+  supply_completed
+  fuel_replenishment
+  supply_error
+  )
 
 # Function to check for all topics
 check_topics() {
