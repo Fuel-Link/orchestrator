@@ -83,6 +83,16 @@ docker run -it --rm --network=host confluentinc/cp-kafka /bin/kafka-topics --cre
 
 However, when the containers are dismounted, this data is lost. To make it persistent, duplicate the command (with necessary changes) around lines 60 of the `docker-compose.yml` file and add it's check on the `applications/check_topics.sh` file.
 
+## Http Rest API
+
+For better integration with other systems, mainly web application relying in Rest and Restfull frameworks, we integrated a module into Kafka for that effect, which enables our system to not only work with standard **TCP** format communication, but also with **Http**. This API is available at `localhost:8082`. A guide to use can be acessed [here](https://github.com/confluentinc/kafka-rest?tab=readme-ov-file), containing the types of request that can be made. Just an example on it's status, execute the following command on a terminal window:
+
+```bash
+curl http://localhost:8082/v3/clusters
+```
+
+Then check if the result is in *JSON* format and with valid information about the Kafka cluster.
+
 ## Other programs
 
 Using the above docker commands, kafka offers a variety of applications to execute, as can be observed in the following image:

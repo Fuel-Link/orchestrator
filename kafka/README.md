@@ -11,3 +11,5 @@ Please check the `docker` directory for indication on how to operate kafka.
 * https://kafka.apache.org/37/documentation/streams/tutorial
 * https://github.com/wurstmeister/kafka-docker/wiki/Connectivity
 * https://stackoverflow.com/questions/72435550/confluent-cloud-add-basic-auth-to-kafka-rest-proxy-docker-container
+* https://github.com/confluentinc/kafka-rest?tab=readme-ov-file
+* https://docs.confluent.io/platform/current/kafka-rest/index.html
