@@ -9,12 +9,9 @@ topics=(
   plateRecognized 
   streams-plaintext-input 
   streams-wordcount-output 
-  pump_init 
-  authorize_supply
-  supply_completed
-  fuel_replenishment
-  supply_error
-  )
+  gas-pump_uplink
+  gas-pump_downlink
+)
 
 # Function to check for all topics
 check_topics() {

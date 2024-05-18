@@ -38,6 +38,7 @@ services:
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_JMX_PORT: 9101
       KAFKA_JMX_HOSTNAME: localhost
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
     volumes:
       - ./storage/dev/lib/kafka:/var/lib/kafka
     networks:
@@ -72,11 +73,8 @@ services:
                 kafka-topics --create --topic plateRecognized --if-not-exists --bootstrap-server kafka:29092 --partitions 4 --replication-factor 1 && \
                 kafka-topics --create --topic streams-plaintext-input --if-not-exists --bootstrap-server kafka:29092 --partitions 4 --replication-factor 1 && \
                 kafka-topics --create --topic streams-wordcount-output --if-not-exists --bootstrap-server kafka:29092 --partitions 4 --replication-factor 1 && \
-                kafka-topics --create --topic pump_init --if-not-exists --bootstrap-server kafka:29092 --partitions 4 --replication-factor 1 && \
-                kafka-topics --create --topic authorize_supply --if-not-exists --bootstrap-server kafka:29092 --partitions 4 --replication-factor 1 && \
-                kafka-topics --create --topic supply_completed --if-not-exists --bootstrap-server kafka:29092 --partitions 4 --replication-factor 1 && \
-                kafka-topics --create --topic fuel_replenishment --if-not-exists --bootstrap-server kafka:29092 --partitions 4 --replication-factor 1 && \
-                kafka-topics --create --topic supply_error --if-not-exists --bootstrap-server kafka:29092 --partitions 4 --replication-factor 1 && \
+                kafka-topics --create --topic gas-pump_uplink --if-not-exists --bootstrap-server kafka:29092 --partitions 4 --replication-factor 1 && \
+                kafka-topics --create --topic gas-pump_downlink --if-not-exists --bootstrap-server kafka:29092 --partitions 4 --replication-factor 1 && \
                 sleep infinity'"
     environment:
       # The following settings are listed here only to satisfy the image's requirements.
