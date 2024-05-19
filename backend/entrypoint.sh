@@ -1,7 +1,10 @@
 #!/bin/bash
 
-# Sleep for 30 seconds
-sleep 30
+# Wait for kafka to be ready
+cub kafka-ready -b kafka:29092 1 20
+
+# Wait for all topics to be created
+./check_topics.sh
 
 # Execute your application
-exec "$@"
+npm run start:dev

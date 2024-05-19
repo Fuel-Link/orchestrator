@@ -10,9 +10,15 @@ COPY . .
 
 RUN npm run build
 
-COPY entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/entrypoint.sh
+COPY entrypoint.sh .
+COPY check_topics.sh .
 
-CMD [ "npm", "run", "start:dev" ]
+RUN apt-get update
+
+RUN apt-get install -y dos2unix && dos2unix entrypoint.sh && dos2unix check_topics.sh
+
+RUN chmod a+x entrypoint.sh
+
+RUN chmod a+x check_topics.sh
 
 ENTRYPOINT "./entrypoint.sh"
