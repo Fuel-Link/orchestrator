@@ -1,0 +1,153 @@
+version: '3.7'
+
+services:
+  db:
+    image: postgres
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=postgres
+    container_name: postgres
+    volumes:
+      - ./backend/pgdata:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+    networks:
+      - kafka-network
+
+  app:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nest-docker-postgres
+    environment:
+      - PORT=${PORT}
+    ports:
+      - '4200:4200'
+    depends_on:
+      - db
+    volumes:
+      - ./backend/src:/app/src
+    networks:
+      - kafka-network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: always
+    container_name: nest-pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@admin.com
+      - PGADMIN_DEFAULT_PASSWORD=pgadmin4
+    ports:
+      - '5050:80'
+    depends_on:
+      - db
+    networks:
+      - kafka-network
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:6.2.0
+    hostname: zookeeper
+    container_name: zookeeper
+    ports:
+      - "22181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - kafka-network
+    volumes:
+      - ./kafka/storage/dev/lib/zookeeper:/var/lib/zookeeper
+
+  kafka:
+    image: confluentinc/cp-kafka:6.2.0
+    hostname: broker
+    container_name: broker
+    depends_on:
+      - zookeeper
+    ports:
+      - "29092:29092"
+      - "9092:9092"
+      - "9101:9101"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka:29092,OUTSIDE://localhost:9092
+      KAFKA_LISTENERS: INSIDE://kafka:29092,OUTSIDE://0.0.0.0:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_HOSTNAME: localhost
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    volumes:
+      - ./kafka/storage/dev/lib/kafka:/var/lib/kafka
+    networks:
+      - kafka-network
+
+  kafka-rest-api:
+    image: confluentinc/cp-kafka-rest:6.2.0
+    depends_on:
+      - kafka
+    ports:
+      - "8082:8082"
+    environment:
+      KAFKA_REST_HOST: 0.0.0.0
+      KAFKA_REST_BOOTSTRAP_SERVERS: kafka:29092
+    networks:
+      - kafka-network
+
+  kafka-create-topics:
+    image: confluentinc/cp-kafka:6.2.0
+    depends_on:
+      - kafka
+    hostname: kafka-create-topics
+    command: "bash -c 'echo Waiting for Kafka to be ready... && \
+                cub kafka-ready -b kafka:29092 1 20 && \
+                kafka-topics --create --topic hello-world --if-not-exists --bootstrap-server kafka:29092 --partitions 1 --replication-factor 1 && \
+                kafka-topics --create --topic imageCaptured --if-not-exists --bootstrap-server kafka:29092 --partitions 4 --replication-factor 1 && \
+                kafka-topics --create --topic plateRecognized --if-not-exists --bootstrap-server kafka:29092 --partitions 4 --replication-factor 1 && \
+                kafka-topics --create --topic streams-plaintext-input --if-not-exists --bootstrap-server kafka:29092 --partitions 4 --replication-factor 1 && \
+                kafka-topics --create --topic streams-wordcount-output --if-not-exists --bootstrap-server kafka:29092 --partitions 4 --replication-factor 1 && \
+                kafka-topics --create --topic gas-pump_uplink --if-not-exists --bootstrap-server kafka:29092 --partitions 4 --replication-factor 1 && \
+                kafka-topics --create --topic gas-pump_downlink --if-not-exists --bootstrap-server kafka:29092 --partitions 4 --replication-factor 1 && \
+                sleep infinity'"
+    environment:
+      KAFKA_BROKER_ID: ignored
+      KAFKA_ZOOKEEPER_CONNECT: ignored
+    networks:
+      - kafka-network
+
+  kafdrop:
+    image: obsidiandynamics/kafdrop
+    restart: "no"
+    ports:
+      - "9007:9000"
+    environment:
+      KAFKA_BROKERCONNECT: "kafka:29092"
+      JVM_OPTS: "-Xms16M -Xmx48M -Xss512K -XX:-TieredCompilation -XX:+UseStringDeduplication -noverify"
+    depends_on:
+      - kafka
+    networks:
+      - kafka-network
+
+  kafka-plate-recognizer-stream:
+    image: plate-recognizer_stream:1.0
+    depends_on:
+      - kafka
+      - kafka-create-topics
+    networks:
+      - kafka-network
+    environment:
+      KAFKA_BROKER_ID: ignored
+      KAFKA_ZOOKEEPER_CONNECT: ignored
+    command: "bash -c 'echo Waiting for Kafka to be ready... && \
+                cub kafka-ready -b kafka:29092 1 20 && \
+                sh check_topics.sh && \
+                mvn exec:java -Dexec.mainClass=applications.PlateRecognizer'"
+
+networks:
+  kafka-network:
+    driver: bridge
