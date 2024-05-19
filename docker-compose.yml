@@ -11,6 +11,8 @@ services:
       - ./backend/pgdata:/var/lib/postgresql/data
     ports:
       - '5432:5432'
+    depends_on:
+      - kafka-rest-api
     networks:
       - kafka-network
 
@@ -25,6 +27,7 @@ services:
       - '4200:4200'
     depends_on:
       - db
+      - kafka-rest-api
     volumes:
       - ./backend/src:/app/src
     networks:
@@ -41,6 +44,8 @@ services:
       - '5050:80'
     depends_on:
       - db
+      - kafka-rest-api
+
     networks:
       - kafka-network
 
@@ -133,20 +138,20 @@ services:
     networks:
       - kafka-network
 
-  kafka-plate-recognizer-stream:
-    image: plate-recognizer_stream:1.0
-    depends_on:
-      - kafka
-      - kafka-create-topics
-    networks:
-      - kafka-network
-    environment:
-      KAFKA_BROKER_ID: ignored
-      KAFKA_ZOOKEEPER_CONNECT: ignored
-    command: "bash -c 'echo Waiting for Kafka to be ready... && \
-                cub kafka-ready -b kafka:29092 1 20 && \
-                sh check_topics.sh && \
-                mvn exec:java -Dexec.mainClass=applications.PlateRecognizer'"
+  # kafka-plate-recognizer-stream:
+  #   image: plate-recognizer_stream:1.0
+  #   depends_on:
+  #     - kafka
+  #     - kafka-create-topics
+  #   networks:
+  #     - kafka-network
+  #   environment:
+  #     KAFKA_BROKER_ID: ignored
+  #     KAFKA_ZOOKEEPER_CONNECT: ignored
+  #   command: "bash -c 'echo Waiting for Kafka to be ready... && \
+  #               cub kafka-ready -b kafka:29092 1 20 && \
+  #               sh check_topics.sh && \
+  #               mvn exec:java -Dexec.mainClass=applications.PlateRecognizer'"
 
 networks:
   kafka-network:

@@ -25,7 +25,7 @@ export class KafkaCommunicationService {
 
     private async initializeKafkaConsumer() {
     await kafkaConsumer.connect();
-    await kafkaConsumer.subscribe({ topic: 'plate-recognition' });
+    await kafkaConsumer.subscribe({ topic: 'plateRecognized' });
     await kafkaConsumer.run({
     eachMessage: async ({ topic, partition, message }) => {
     // Handle incoming Kafka messages here
@@ -38,7 +38,7 @@ export class KafkaCommunicationService {
     async send(authorized: string): Promise<void> {
         await kafkaProducer.connect();
         await kafkaProducer.send({
-        topic: 'unlock-gaspump',
+        topic: 'gas-pump_downlink',
         messages: [{ value: authorized }],
         });
         await kafkaProducer.disconnect();
