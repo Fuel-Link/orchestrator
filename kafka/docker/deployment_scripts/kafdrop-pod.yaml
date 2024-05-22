@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    io.kompose.service: kafdrop
+  name: kafdrop
+  namespace: egs-fuellink
+spec:
+  containers:
+  - env:
+    - name: JVM_OPTS
+      value: -Xms16M -Xmx48M -Xss512K -XX:-TieredCompilation -XX:+UseStringDeduplication
+        -noverify
+    - name: KAFKA_BROKERCONNECT
+      value: kafka:29092
+    image: obsidiandynamics/kafdrop
+    name: kafdrop
+    ports:
+    - containerPort: 9000
+    resources: {}
+  restartPolicy: Never
+status: {}

@@ -347,3 +347,131 @@ Taking this information into account, the message format of the data place into 
 ```
 
 Where `results` is the a list, **not** empty with the data present in the `results` field from the Plate Recognizer.
+
+Example complete payload:
+
+```json
+{
+    "timestamp": "2024-04-10T22:47:15.648650832Z",
+    "imageId": 85635070,
+    "results": [
+        {
+            "box": {
+                "xmin": 115,
+                "ymin": 40,
+                "xmax": 1254,
+                "ymax": 265
+            },
+            "plate": "2533xq",
+            "region": {
+                "code": "pt",
+                "score": 0.041
+            },
+            "score": 0.9,
+            "candidates": [
+                {
+                    "score": 0.9,
+                    "plate": "2533xq"
+                }
+            ],
+            "dscore": 0.871,
+            "vehicle": {
+                "score": 0.0,
+                "type": "Unknown",
+                "box": {
+                    "xmin": 0,
+                    "ymin": 0,
+                    "xmax": 0,
+                    "ymax": 0
+                }
+            }
+        }
+    ],
+    "thingId": "org.eclipse.ditto:c5ae6b75-3da1-4cd3-b0c5-ff22fa509233"
+}
+```
+
+# Deployment
+
+## Create the Plate-Recognized_stram container
+
+Navigate to the directory where the `Dockerfile` is located:
+
+```bash
+cd kafka-streams
+```
+
+Build the container with the `registry.deti` in mind:
+
+```bash
+docker buildx build --platform linux/amd64 --network=host -t registry.deti/egs-fuellink/plate-recognizer_stream:1.0 .
+```
+
+Then, upload the container to `registry.deti`:
+
+```bash
+docker push registry.deti/egs-fuellink/plate-recognizer_stream:1.0
+```
+
+## Generate the deployment files
+
+To generate the deployment files, execute the command:
+
+```bash
+kompose convert -f docker-compose-prod.yml -o deployment.yml
+```
+
+Next, add the namespace to all the generated deployment files:
+
+```yaml
+metadata:
+  ...
+  namespace: egs-fuellink
+...
+```
+
+## Deploy
+
+Execute the following commands in order:
+
+```bash
+kubectl apply -f kafka-claim0-persistentvolumeclaim.yaml
+kubectl apply -f zookeeper-claim0-persistentvolumeclaim.yaml
+kubectl apply -f zookeeper-service.yaml
+kubectl apply -f zookeeper-deployment.yaml
+kubectl apply -f kafka-service.yaml
+kubectl apply -f kafka-deployment.yaml 
+kubectl apply -f kafka-create-topics-deployment.yaml
+kubectl apply -f kafka-plate-recognizer-stream-deployment.yaml
+kubectl apply -f kafdrop-service.yaml
+kubectl apply -f kafdrop-pod.yaml
+```
+
+```bash
+kubectl apply -f deployment.yaml
+```
+
+To delete everything, run the command:
+
+```bash
+kubectl delete -f kafka-claim0-persistentvolumeclaim.yaml
+kubectl delete -f zookeeper-claim0-persistentvolumeclaim.yaml
+kubectl delete -f zookeeper-service.yaml
+kubectl delete -f zookeeper-deployment.yaml
+kubectl delete -f kafka-service.yaml
+kubectl delete -f kafka-deployment.yaml 
+kubectl delete -f kafka-create-topics-deployment.yaml
+kubectl delete -f kafka-plate-recognizer-stream-deployment.yaml
+kubectl delete -f kafdrop-service.yaml
+kubectl delete -f kafdrop-pod.yaml
+```
+
+```bash
+kubectl delete -f deployment.yaml
+```
+
+[Interessante](https://www.confluent.io/blog/kafka-listeners-explained/)
+
+## Errors
+
+* Warning appearing `port is deprecated. Please use KAFKA_ADVERTISED_LISTENERS instead.`, while also mounting, but deleting the volume. Fix [here](https://github.com/confluentinc/schema-registry/issues/689)
