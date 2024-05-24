@@ -140,7 +140,7 @@ items:
         labels:
           io.kompose.service: kafka
       spec:
-        #enableServiceLinks: false # This is required due to internal kafka use of schema-registry and messing with kubernetes sutff -> https://github.com/confluentinc/schema-registry/issues/689
+        enableServiceLinks: false # This is required due to internal kafka use of schema-registry and messing with kubernetes sutff -> https://github.com/confluentinc/schema-registry/issues/689
         containers:
         - env:
           - name: KAFKA_ADVERTISED_LISTENERS
