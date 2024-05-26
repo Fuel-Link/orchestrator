@@ -73,6 +73,7 @@ services:
                 kafka-topics --create --topic plateRecognized --if-not-exists --bootstrap-server kafka:29092 --partitions 4 --replication-factor 1 && \
                 kafka-topics --create --topic streams-plaintext-input --if-not-exists --bootstrap-server kafka:29092 --partitions 4 --replication-factor 1 && \
                 kafka-topics --create --topic streams-wordcount-output --if-not-exists --bootstrap-server kafka:29092 --partitions 4 --replication-factor 1 && \
+                kafka-topics --create --topic gas-pump_auth --if-not-exists --bootstrap-server kafka:29092 --partitions 4 --replication-factor 1 && \
                 kafka-topics --create --topic gas-pump_uplink --if-not-exists --bootstrap-server kafka:29092 --partitions 4 --replication-factor 1 && \
                 kafka-topics --create --topic gas-pump_downlink --if-not-exists --bootstrap-server kafka:29092 --partitions 4 --replication-factor 1 && \
                 sleep infinity'"

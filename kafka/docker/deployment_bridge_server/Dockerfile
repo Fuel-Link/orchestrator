@@ -16,4 +16,4 @@ EXPOSE 8000
 
 # Run http_server_producer.py when the container launches
 #CMD ["python3", "http_server_producer.py"]
-CMD ["sh", "-c", "sleep 30 && python3 http_server_producer.py"]
+CMD ["sh", "-c", "sleep 5 && python3 -u http_server_producer.py"]

@@ -1,3 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: bridge-server
+  namespace: egs-fuellink
+  labels:
+    io.kompose.service: bridge-server
+spec:
+  selector:
+    io.kompose.service: bridge-server
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
+  type: ClusterIP
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -26,6 +42,8 @@ spec:
     spec:
       containers:
       - image: registry.deti/egs-fuellink/deployment-bridge_server:1.0
+        ports:
+          - containerPort: 8000
         imagePullPolicy: ""
         name: bridge-server
         resources: {}

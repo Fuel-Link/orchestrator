@@ -16,4 +16,4 @@ EXPOSE 8000
 
 # Run consumer_http_client.py when the container launches
 # Sleep for 30 seconds and then launch the python program
-CMD ["sh", "-c", "sleep 30 && python3 consumer_http_client.py"]
+CMD ["sh", "-c", "sleep 30 && python3 -u consumer_http_client.py"]
