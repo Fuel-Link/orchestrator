@@ -14,7 +14,6 @@ spec:
   template:
     metadata:
       labels:
-        network/kafka-network: "true"
         service: kafka
       namespace: egs-fuellink
     spec:

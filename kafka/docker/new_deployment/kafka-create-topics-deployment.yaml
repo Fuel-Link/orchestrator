@@ -23,7 +23,6 @@ spec:
       creationTimestamp: null
       labels:
         io.kompose.service: kafka-create-topics
-        network/kafka-network: "true"
     spec:
       containers:
       - args:
