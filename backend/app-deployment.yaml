@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    io.kompose.service: app
+  name: app
+  namespace: egs-fuellink
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: app
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        io.kompose.network/kafka-network: "true"
+        io.kompose.service: app
+    spec:
+      containers:
+        - env:
+            - name: PORT
+          image: registry.deti/egs-fuellink/backend
+          name: nest-docker-postgres
+          ports:
+            - containerPort: 4200
+              hostPort: 4200
+              protocol: TCP
+          resources: {}
+      restartPolicy: Always

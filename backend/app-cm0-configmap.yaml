@@ -1,0 +1,187 @@
+apiVersion: v1
+data:
+  app.controller.spec.ts: |
+    import { Test, TestingModule } from '@nestjs/testing';
+    import { AppController } from './app.controller';
+    import { AppService } from './app.service';
+
+    describe('AppController', () => {
+      let appController: AppController;
+
+      beforeEach(async () => {
+        const app: TestingModule = await Test.createTestingModule({
+          controllers: [AppController],
+          providers: [AppService],
+        }).compile();
+
+        appController = app.get<AppController>(AppController);
+      });
+
+      describe('root', () => {
+        it('should return "Hello World!"', () => {
+          expect(appController.getHello()).toBe('Hello World!');
+        });
+      });
+    });
+  app.controller.ts: |
+    import { Controller, Get, Req } from '@nestjs/common';
+    import { AppService } from './app.service';
+
+    @Controller()
+    export class AppController {
+      constructor(private readonly appService: AppService) {}
+
+      @Get('/')
+      getAPI(@Req() request: Request): string {
+        return 'FuelLink Backend is working!';
+      }
+    }
+  app.module.ts: |
+    import { Module } from '@nestjs/common';
+    import { AppController } from './app.controller';
+    import { AppService } from './app.service';
+    import { TypeOrmModule } from '@nestjs/typeorm';
+    import { VehicleInfoModule } from './vehicle-info/vehicle-info.module';
+    import { FuelMovementsModule } from './fuel-movements/fuel-movements.module';
+    import { GasPumpModule } from './gas-pump/gas-pump.module';
+    import { UsersModule } from './users/users.module';
+    import { KafkaCommunicationModule } from './kafka-communication/kafka-communication.module';
+
+    @Module({
+      imports: [
+        TypeOrmModule.forRoot({
+          type: 'postgres',
+          host: 'db',
+          port: 5432,
+          username: 'postgres',
+          password: 'postgres',
+          database: 'postgres',
+          entities: [],
+          synchronize: true,
+          autoLoadEntities: true,
+        }),
+        VehicleInfoModule,
+        FuelMovementsModule,
+        GasPumpModule,
+        UsersModule,
+        KafkaCommunicationModule
+      ],
+      controllers: [AppController],
+      providers: [AppService],
+    })
+    export class AppModule {}
+  app.service.ts: |
+    import { Injectable, Controller } from '@nestjs/common';
+    const winston = require('winston');
+    require('winston-daily-rotate-file');
+    import * as fs from 'fs';
+    import * as path from 'path';
+    import { Express } from 'express';
+
+
+    @Injectable()
+    export class AppService {
+      transport;
+      logger;
+
+      constructor(){
+         //logs
+         this.transport = new (winston.transports.DailyRotateFile)({
+          filename: 'fuelLink_back-%DATE%.log',
+          dirname: './logs',
+          maxSize: '10MB',
+          datePattern: 'DD-MM-YYYY',
+          maxFiles: '180d'
+        });
+
+        this.transport.on('rotate', function (oldFilename, newFilename) {
+        });
+
+        this.logger = winston.createLogger({
+          transports: [
+            this.transport
+          ]
+        });
+      }
+
+
+      async handleResponse(sucess: boolean, message: string, http_code: number, api: any) {
+        try {
+          let response = {
+            sucess: sucess,
+            message: message,
+            http_code: http_code,
+            op: api.op,
+            start: api.date,
+            finish: new Date(),
+            validation: api.validation,
+            data: api.result
+          };
+
+          if (http_code !== 500) {
+            console.log(response);
+            this.logger.info(response);
+          } else {
+            console.error(response);
+            this.logger.info(response);
+          }
+
+          const res = {
+            sucess:sucess,
+            http_code:http_code,
+            op:api.op,
+            data:api.result
+          }
+
+          return res;
+        } catch (error) {
+          console.error(error);
+          return { sucess: false, http_code: 500, data: null };
+        }
+      }
+
+      getAPI() {
+
+        return this.getAPI();
+      }
+
+    }
+  kafka.config.ts: "import { Kafka, logLevel } from 'kafkajs';\nconst kafka = new Kafka({\n clientId: 'hello-world',\n brokers:[ \n    \"kafka:29092\",\n    \"kafka:29092\"\n\n], \nlogLevel: logLevel.ERROR, \n});\nexport const kafkaProducer = kafka.producer();\nexport const kafkaConsumer = kafka.consumer({ groupId: 'hello-world' });"
+  main.ts: |
+    import { NestFactory } from '@nestjs/core';
+    import { AppModule } from './app.module';
+    import { ValidationPipe } from '@nestjs/common';
+
+    const CORS_OPTIONS = {
+
+      origin: true,
+      allowedHeaders: [
+        'Origin',
+        'X-Requested-With',
+        'Accept',
+        'Content-Type',
+        'Authorization'
+      ],
+
+      methods: ['GET', 'PUT', 'OPTIONS', 'POST', 'DELETE'],
+    };
+
+
+    async function bootstrap() {
+      const app = await NestFactory.create(AppModule);
+
+      app.enableCors(CORS_OPTIONS);
+
+      app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+
+      await app.listen(4200, '0.0.0.0', () => {
+        console.log('[WEB]');
+      });
+    }
+    bootstrap();
+kind: ConfigMap
+metadata:
+  labels:
+    io.kompose.service: app
+  name: app-cm0
+  namespace: egs-fuellink
