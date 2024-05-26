@@ -7,7 +7,8 @@ from kafka import KafkaProducer
 app = Flask(__name__)
 
 # Configuration
-kafka_topic = 'hello-world' #'plateRecognized'
+#kafka_topic = 'hello-world'
+kafka_topic = 'plateRecognized'
 kafka_bootstrap_servers = 'kafka:29092'
 
 # Initialize Kafka Producer

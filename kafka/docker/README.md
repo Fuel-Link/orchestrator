@@ -348,6 +348,32 @@ Taking this information into account, the message format of the data place into 
 
 Where `results` is the a list, **not** empty with the data present in the `results` field from the Plate Recognizer.
 
+# Place messages into plateRecognized topic with kcat
+
+Launch Kcat with command:
+
+```bash
+kubectl apply -f kcat-deployment.yaml
+```
+
+Send message to topic:
+
+```bash
+echo "<replace_with_message>" | kcat -P -b kafka:29092 -t <replace_with_topic> -p -1
+```
+
+Example:
+
+```bash
+echo "Test Message" | kcat -P -b kafka:29092 -t hello-world -p -1
+```
+
+Launch a consumer:
+
+```bash
+kcat -C -b kafka:29092 -t <replace_with_topic> -p -1
+```
+
 Example complete payload:
 
 ```json
@@ -393,7 +419,7 @@ Example complete payload:
 
 # Deployment
 
-## Create the Plate-Recognized_stram container
+## Create the Plate-Recognized_stream container
 
 Navigate to the directory where the `Dockerfile` is located:
 

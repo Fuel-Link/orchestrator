@@ -5,7 +5,8 @@ import requests
 # Configuration
 kafka_topic = 'plateRecognized'
 kafka_bootstrap_servers = 'kafka:29092'
-http_endpoint = 'http://bridge-server:8000/licensePlateAPI' #'http://grupo1-egs-deti.ua.pt:8000/licensePlateAPI'
+#http_endpoint = 'http://bridge-server:8000/licensePlateAPI'
+http_endpoint = 'http://grupo1-egs-deti.ua.pt:8000/licensePlateAPI'
 
 # Initialize Kafka Consumer
 consumer = KafkaConsumer(

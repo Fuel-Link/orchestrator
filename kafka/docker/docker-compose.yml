@@ -114,18 +114,14 @@ services:
                 sh check_topics.sh && \
                 mvn exec:java -Dexec.mainClass=applications.PlateRecognizer'"
 
-  bridge-server:
-    image: deployment-bridge_server:1.0
-    depends_on:
-      - kafka
-      - kafka-create-topics
-    networks:
-      - kafka-network
-    restart: always
-    #command: "bash -c 'echo Waiting for Kafka to be ready... && \
-    #            cub kafka-ready -b kafka:29092 1 20 && \
-    #            sh check_topics.sh && \
-    #            python3 http_server_producer.py'"
+  #bridge-server:
+  #  image: deployment-bridge_server:1.0
+  #  depends_on:
+  #    - kafka
+  #    - kafka-create-topics
+  #  networks:
+  #    - kafka-network
+  #  restart: always
 
   bridge-client:
     image: deployment-bridge_client:1.0
@@ -135,10 +131,6 @@ services:
     networks:
       - kafka-network
     restart: always
-    #command: "bash -c 'echo Waiting for Kafka to be ready... && \
-    #            cub kafka-ready -b kafka:29092 1 20 && \
-    #            sh check_topics.sh && \
-    #            python3 consumer_http_client.py'"
 
 # Only use external network in development environment
 networks:
