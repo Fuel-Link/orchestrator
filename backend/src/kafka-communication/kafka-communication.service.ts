@@ -3,13 +3,28 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { kafkaConsumer, kafkaProducer } from 'src/kafka.config';
 import { KafkaCommunication } from './kafka-communication.entity';
 import { Repository } from 'typeorm';
+import { GasPump } from 'src/gas-pump/gas-pump.entity';
+import { Users } from 'src/users/users.entity';
+import { v4 as uuidv4 } from 'uuid'; 
+import { FuelMovements } from 'src/fuel-movements/fuel-movements.entity';
 
 @Injectable()
 export class KafkaCommunicationService {
 
     constructor(
         @InjectRepository(KafkaCommunication)
-        private readonly kafkaRepository: Repository<KafkaCommunication>
+        private readonly kafkaRepository: Repository<KafkaCommunication>,
+
+        @InjectRepository(GasPump)
+        private readonly repository: Repository<GasPump>,
+
+        @InjectRepository(Users)
+        private readonly userRepository: Repository<Users>,
+
+        @InjectRepository(FuelMovements)
+        private readonly fuelRepository: Repository<FuelMovements>
+
+
     ) {
         this.initializeKafkaConsumer();
     }
@@ -24,29 +39,167 @@ export class KafkaCommunicationService {
 
     private async initializeKafkaConsumer() {
         await kafkaConsumer.connect();
-        await kafkaConsumer.subscribe({ topic: 'plateRecognized' });
+        await kafkaConsumer.subscribe({ topics: ['plateRecognized', 'gas-pump_uplink', 'gas-pump_auth'] });
         await kafkaConsumer.run({
             eachMessage: async ({ topic, partition, message }) => {
+                let messageValue = message.value.toString();
+                console.log(`Message received from topic ${topic}:`, messageValue);
+    
+                messageValue = this.correctMessageFormat(messageValue);
+    
                 try {
-                    const data = JSON.parse(message.value.toString());
-                    const plate = data.results[0].plate;
-                    const thingId = data.thingId;
-                    const newComm = new KafkaCommunication();
-                    newComm.plate = plate;
-                    newComm.thingId = thingId;
-                    await this.kafkaRepository.save(newComm);
+                    const data = JSON.parse(messageValue);
+                    //console.log("Parsed data:", data); 
+    
+                    switch (topic) {
+                        case 'plateRecognized':
+                            const results = data.results;
+                            console.log("Parsed results:", results);
+                            for (const [index, result] of results.entries()) {
+                                console.log("Processing result", index + 1, ":", result); 
+                                const plate = result.plate;
+                                const thingId = data.thingId;
+                                console.log("Plate:", plate, "ThingId:", thingId); 
+                                const newComm = new KafkaCommunication();
+                                newComm.plate = plate.toUpperCase();
+                                newComm.thingId = thingId;
+                                await this.kafkaRepository.save(newComm);
+                                //console.log("Saved:", newComm); 
+                            }
+                            break;
+
+                            case 'gas-pump_uplink':
+                                try {
+                                    const data = JSON.parse(message.value.toString());
+                                    const path = data.path;
+                                    const thingId = data.extra.thingId;
+                            
+                                    // Handle pump_init
+                                    if (path === "/features/pump_init") {
+                                        const stock = data.value.properties.stock.properties.value;
+                                        console.log("ThingId:", thingId, "Stock:", stock);
+                                        const gasPump = await this.repository.findOne({ where: { thingId } });
+                                        if (gasPump) {
+                                            gasPump.stock = stock;
+                                            await this.repository.save(gasPump);
+                                            console.log("Updated gas pump:", gasPump);
+                                        } else {
+                                            console.error(`Gas pump with thingId ${thingId} not found`);
+                                        }
+                                    }
+                                    
+                                    // Handle supply_completed
+                                    else if (path === "/features/supply_completed") {
+                                        const liters = data.value.properties.liters.properties.value;
+                                        const lastKafkaComm = await this.kafkaRepository.findOne({
+                                            order: { id: "DESC" }
+                                        });
+
+                                        const lastAuth = await this.userRepository.findOne({
+                                            order: { user_id: "DESC" }
+                                        });
+
+                                        if (!lastKafkaComm) {
+                                            throw new Error("No previous Kafka communication found");
+                                        }
+                                        const plate = lastKafkaComm.plate;
+                                        const user = await this.userRepository.findOne({
+                                            where: { user_id: lastAuth.user_id },
+                                            order: { user_id: "DESC" }
+                                        });
+                                        if (!user) {
+                                            throw new Error("User not found");
+                                        }
+                                        const gaspump = await this.repository.findOne({ where: { thingId } });
+                                        if (!gaspump) {
+                                            throw new Error(`Gas pump with thingId ${thingId} not found`);
+                                        }
+                                        
+                                        const fuelMovement = new FuelMovements();
+                                        fuelMovement.plate = plate;
+                                        fuelMovement.liters = liters;
+                                        fuelMovement.gaspump_id = gaspump.gaspump_id;
+                                        fuelMovement.user_id = user.user_id;
+                                        fuelMovement.date = new Date().toISOString();
+                            
+                                        await this.fuelRepository.save(fuelMovement);
+                                        console.log("Saved fuel movement:", fuelMovement);
+                                    }
+                                    
+                                    else {
+                                        console.error(`Unknown path: ${path}`);
+                                    }
+                                } catch (error) {
+                                    console.error(`Error processing message from topic ${topic}: ${message.value.toString()}`, error);
+                                }
+                            break;
+                            
+    
+                            case 'gas-pump_auth':
+                                try {
+                                    const { username, hash } = JSON.parse(message.value.toString());
+                            
+            
+                                    const user = await this.userRepository.findOne({ where: { hash } });
+                            
+                                  
+                                    const authorization = user ? 1 : 0;
+
+                                    const authMessage = {
+                                        thingId: "org.eclipse.ditto:9b0ec976-3012-42d8-b9ea-89d8b208ca20",
+                                        topic: "org.eclipse.ditto/9b0ec976-3012-42d8-b9ea-89d8b208ca20/things/twin/commands/modify",
+                                        path: "/features/authorize_supply/properties/",
+                                        messageId: "{{ uuid() }}", 
+                                        timestamp: new Date().toISOString(), 
+                                        source: "gas-pump",
+                                        method: "update",
+                                        target: "/features/authorize_supply",
+                                        value: {
+                                            msgType: 1,
+                                            thingId: "org.eclipse.ditto:9b0ec976-3012-42d8-b9ea-89d8b208ca20",
+                                            topic: "org.eclipse.ditto/9b0ec976-3012-42d8-b9ea-89d8b208ca20/things/twin/commands/modify",
+                                            path: "/features/authorize_supply/properties/",
+                                            authorization: authorization,
+                                            timestamp: new Date().toISOString()
+                                        }
+                                    };
+                            
+                                    await this.send(JSON.stringify(authMessage));
+                                } catch (error) {
+                                    console.error(`Error processing message from topic ${topic}: ${message.value.toString()}`, error);
+                                }
+                                break;
+                            
+                        default:
+                            console.warn("Unhandled topic:", topic);
+                            break;
+                    }
                 } catch (error) {
-                    console.error(`Error parsing message: ${message.value.toString()}`, error);
+                    console.error(`Error processing message from topic ${topic}: ${messageValue}`, error);
+    
+                    if (error instanceof SyntaxError) {
+                        console.error("SyntaxError: Invalid JSON format:", messageValue);
+                    }
                 }
             },
         });
     }
     
+    correctMessageFormat(message:string) {
+        return message
+        .replace(/([{,])(\s*)(\w+)(\s*):/g, '$1"$3":')  
+        .replace(/:\s*([^,"\s}]+)\s*([,}])/g, (match, p1, p2) => {
+            return isNaN(p1) && p1 !== 'true' && p1 !== 'false' && p1 !== 'null' ? `: "${p1}"${p2}` : `: ${p1}${p2}`;
+        })
+        .replace(/:\s*([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\+[0-9]{4})/g, ': "$1"');  // Add quotes around timestamp
+        }
+
+    
 
     async send(authorized: string): Promise<void> {
         await kafkaProducer.connect();
         await kafkaProducer.send({
-            topic: 'gas-pump_downlink',
+            topic: 'supply_authorized',
             messages: [{ value: authorized }],
         });
         await kafkaProducer.disconnect();

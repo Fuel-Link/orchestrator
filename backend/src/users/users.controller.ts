@@ -1,7 +1,7 @@
 import { Controller, Get, HttpStatus, Query, Post, Body, Req, Headers, Delete } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { AppService } from 'src/app.service';
-import * as moment from 'moment';
+import moment from 'moment';
 import { Request } from 'express';
 
 @Controller('users')
@@ -42,7 +42,7 @@ export class UsersController {
     
 
     @Post()
-    async postUser(@Body() user:{username:string, role:string, hash:string},@Req() request: Request, @Headers() headers: { authorization: string }) {
+    async postUser(@Body() user:{username:string, role:string, hash:string, pumpAuth:string},@Req() request: Request, @Headers() headers: { authorization: string }) {
     
         let api = {
             op: 'Post User',

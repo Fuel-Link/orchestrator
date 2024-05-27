@@ -12,7 +12,7 @@ export class VehicleInfoService {
         return await this.repository.manager.query('Select * from "vehicle_info"');
     }
 
-    async save(vehicle:{plate:string, fuel:string, type:string,model:string,brand:string, color:string}) {
+    async save(vehicle:{plate:string, fuel:string, type:string,model:string,brand:string, color:string, image:string}) {
         return await this.repository.save(vehicle);
     }
 

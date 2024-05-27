@@ -21,6 +21,9 @@ export class VehicleInfo {
   @Column({ type: 'varchar', length: 120 })
   public color: string;
 
+  @Column({ type: 'varchar', length: 120 })
+  public image: string;
+
 
 
 }
