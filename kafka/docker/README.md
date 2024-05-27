@@ -374,6 +374,12 @@ Launch a consumer:
 kcat -C -b kafka:29092 -t <replace_with_topic> -p -1
 ```
 
+List topics (only in kafka container):
+
+```bash
+/bin/kafka-topics --list --zookeeper zookeeper:2181
+```
+
 Example complete payload:
 
 ```json
