@@ -73,6 +73,7 @@ services:
                 kafka-topics --create --topic plateRecognized --if-not-exists --bootstrap-server kafka:29092 --partitions 4 --replication-factor 1 && \
                 kafka-topics --create --topic streams-plaintext-input --if-not-exists --bootstrap-server kafka:29092 --partitions 4 --replication-factor 1 && \
                 kafka-topics --create --topic streams-wordcount-output --if-not-exists --bootstrap-server kafka:29092 --partitions 4 --replication-factor 1 && \
+                kafka-topics --create --topic gas-pump_auth --if-not-exists --bootstrap-server kafka:29092 --partitions 4 --replication-factor 1 && \
                 kafka-topics --create --topic gas-pump_uplink --if-not-exists --bootstrap-server kafka:29092 --partitions 4 --replication-factor 1 && \
                 kafka-topics --create --topic gas-pump_downlink --if-not-exists --bootstrap-server kafka:29092 --partitions 4 --replication-factor 1 && \
                 sleep infinity'"
@@ -113,6 +114,24 @@ services:
                 cub kafka-ready -b kafka:29092 1 20 && \
                 sh check_topics.sh && \
                 mvn exec:java -Dexec.mainClass=applications.PlateRecognizer'"
+
+  #bridge-server:
+  #  image: deployment-bridge_server:1.0
+  #  depends_on:
+  #    - kafka
+  #    - kafka-create-topics
+  #  networks:
+  #    - kafka-network
+  #  restart: always
+
+  bridge-client:
+    image: deployment-bridge_client:1.0
+    depends_on:
+      - kafka
+      - kafka-create-topics
+    networks:
+      - kafka-network
+    restart: always
 
 # Only use external network in development environment
 networks:
