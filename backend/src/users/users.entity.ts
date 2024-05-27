@@ -15,4 +15,10 @@ export class Users {
   @Column({ type: 'varchar', length: 120 })
   public hash: string;
 
+  @Column({ type: 'varchar', length: 120 })
+  public pumpAuth: string;
+
+  @Column({ default: () => 'CURRENT_TIMESTAMP' })
+  public date: string;
+
 }

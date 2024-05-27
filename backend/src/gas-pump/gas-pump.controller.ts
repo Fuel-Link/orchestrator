@@ -1,7 +1,7 @@
 import { Controller, Get, HttpStatus, Query, Post, Body, Req, Headers, Delete } from '@nestjs/common';
 import { GasPumpService } from './gas-pump.service';
 import { AppService } from 'src/app.service';
-import * as moment from 'moment';
+import moment from 'moment';
 import { Request } from 'express';
 
 @Controller('gas-pump')
@@ -43,7 +43,7 @@ export class GasPumpController {
     
 
     @Post()
-    async postGasPump(@Body() gasPump:{fuel:string, stock:number, capacity:number},@Req() request: Request, @Headers() headers: { authorization: string }) {
+    async postGasPump(@Body() gasPump:{fuel:string, stock:number, capacity:number, thingId:string},@Req() request: Request, @Headers() headers: { authorization: string }) {
     
         let api = {
             op: 'Post Gas Pump',

@@ -14,7 +14,7 @@ export class UsersService {
         return await this.repository.manager.query('Select * from "users"');
     }
 
-    async save( user:{username:string, role:string, hash:string}) {
+    async save( user:{username:string, role:string, hash:string,pumpAuth:string}) {
         return await this.repository.save(user);
     }
 

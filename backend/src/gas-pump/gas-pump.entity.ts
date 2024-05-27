@@ -12,6 +12,9 @@ export class GasPump {
   @Column()
   public stock: number;
 
+  @Column({unique:true})
+  public thingId: string;
+
   @Column()
   public capacity: number;
 
