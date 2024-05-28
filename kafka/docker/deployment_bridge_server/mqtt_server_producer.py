@@ -5,66 +5,66 @@ import paho.mqtt.client as mqtt
 
 # Kafka configuration
 KAFKA_BROKER = 'kafka:29092'
-KAFKA_CONSUMER_TOPICS = ['gas-pump_uplink', 'plateRecognized']
-KAFKA_PRODUCER_TOPIC = 'gas-pump_downlink'
+KAFKA_CONSUMER_TOPIC = 'gas-pump_downlink'
+KAFKA_PRODUCER_TOPICS = {
+    'gas-pump_uplink': 'gas-pump_uplink',
+    'plateRecognized': 'plateRecognized'
+}
 
 # MQTT configuration
-MQTT_BROKER = 'grupo1-egs-deti.ua.pt'
-MQTT_TOPIC = 'gas-pump_downlink'
-MQTT_WEBSOCKET_PORT = 80
-MQTT_URI = 'gas-pump-mqtt5'
+MQTT_BROKER = 'gas-pump-mqtt5-mqtt'
+MQTT_CONSUMING_TOPICS = ['gas-pump_uplink', 'plateRecognized']
+MQTT_PORT = 1883
 
 # Initialize Kafka consumer
 kafka_consumer = KafkaConsumer(
-    *KAFKA_CONSUMER_TOPICS,
+    KAFKA_CONSUMER_TOPIC,
     bootstrap_servers=KAFKA_BROKER,
     value_deserializer=lambda m: json.loads(m.decode('utf-8'))
 )
 
 # Initialize Kafka producer
-kafka_producer = KafkaProducer(bootstrap_servers=KAFKA_BROKER)
+kafka_producer = KafkaProducer(
+    bootstrap_servers=KAFKA_BROKER,
+    value_serializer=lambda v: json.dumps(v).encode('utf-8')
+)
 
-# MQTT client setup
-mqtt_client = mqtt.Client(transport='websockets')
+# Initialize MQTT client
+mqtt_client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 
-def on_connect(client, userdata, flags, rc):
+def on_connect(client, userdata, flags, rc, properties):
     """Callback for when the client receives a CONNACK response from the server."""
     if rc == 0:
         print("Connected to MQTT broker")
-        client.subscribe(MQTT_TOPIC)
+        for topic in MQTT_CONSUMING_TOPICS:
+            client.subscribe(topic)
+            print(f"Subscribed to {topic}")
     else:
         print(f"Failed to connect, return code {rc}")
 
-def on_message(client, obj, msg):
+def on_message(client, userdata, msg):
     """Callback for when a PUBLISH message is received from MQTT."""
     data = msg.payload.decode('utf-8')
-    kafka_producer.send(KAFKA_PRODUCER_TOPIC, value=data.encode('utf-8'))
-    print(f"Received from MQTT and sent to Kafka: {data}")
-
-def on_publish(client, obj, mid):
-    """Callback for when a PUBLISH message is sent to the MQTT broker."""
-    print(f"Published message to MQTT with MID {mid}")
+    print(f"Received from MQTT topic {msg.topic}: {data}")
+    data = json.loads(data)
+    kafka_producer.send(KAFKA_PRODUCER_TOPICS[msg.topic], value=data)
+    print(f"Sent to Kafka topic {KAFKA_PRODUCER_TOPICS[msg.topic]}: {data}")
 
 def start_mqtt_client():
     """Start the MQTT client."""
     mqtt_client.on_connect = on_connect
     mqtt_client.on_message = on_message
-    mqtt_client.on_publish = on_publish
-    mqtt_client.connect(MQTT_BROKER, MQTT_WEBSOCKET_PORT, 60)
+    mqtt_client.connect(MQTT_BROKER, MQTT_PORT, 60)
     mqtt_client.loop_start()
+    print("Started MQTT client successfully")
 
 async def kafka_to_mqtt():
     """Consume messages from Kafka and publish to MQTT."""
     for message in kafka_consumer:
-        data = message.value.decode('utf-8')
-        print(f"Received from Kafka, in topic {message.topic}: {data}")
-        if message.topic == 'plateRecognized':
-            mqtt_client.publish(MQTT_TOPIC, data)
-        elif message.topic == 'gas-pump_uplink':
-            if 'pump_init' in data or 'supply_completed' in data:
-                mqtt_client.publish(MQTT_TOPIC, data)
-            else:
-                print(f"Message not sent to MQTT, because isn't destined to the pump: {data}")
+        data = message.value
+        print(f"Received from Kafka topic {message.topic}: {data}")
+        mqtt_client.publish('gas-pump_downlink', json.dumps(data))
+
 
 if __name__ == '__main__':
     # Start MQTT client

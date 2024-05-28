@@ -5,13 +5,13 @@
 Build the container with the `registry.deti` in mind:nginx
 
 ```bash
-docker buildx build --platform linux/amd64 --network=host -t registry.deti/egs-fuellink/deployment-bridge_server:1.0 .
+docker buildx build --platform linux/amd64 --network=host -t registry.deti/egs-fuellink/deployment-bridge_server:2.0 .
 ```
 
 Then, upload the container to `registry.deti`:
 
 ```bash
-docker push registry.deti/egs-fuellink/deployment-bridge_server:1.0
+docker push registry.deti/egs-fuellink/deployment-bridge_server:2.0
 ```
 
 # Example payload in kafka producer

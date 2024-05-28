@@ -368,6 +368,10 @@ Example:
 echo "Test Message" | kcat -P -b kafka:29092 -t hello-world -p -1
 ```
 
+```bash
+echo '{"thingId":"org.eclipse.ditto:9b0ec976-3012-42d8-b9ea-89d8b208ca20","topic":"org.eclipse.ditto/9b0ec976-3012-42d8-b9ea-89d8b208ca20/things/twin/commands/modify","path":"/features/authorize_supply/properties/","messageId":"{{ uuid() }}","timestamp":"{{ timestamp }}","source":"gas-pump","method":"update","target":"/features/authorize_supply","value":{"msgType":1,"thingId":"org.eclipse.ditto:9b0ec976-3012-42d8-b9ea-89d8b208ca20","topic":"org.eclipse.ditto/9b0ec976-3012-42d8-b9ea-89d8b208ca20/things/twin/commands/modify","path":"/features/authorize_supply/properties/","authorization":1,"timestamp":"2024-05-18T12:03:44+0100"}}' | kcat -P -b kafka:29092 -t gas-pump_downlink -p -1
+```
+
 Launch a consumer:
 
 ```bash

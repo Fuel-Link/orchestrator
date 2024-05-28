@@ -124,14 +124,14 @@ services:
   #    - kafka-network
   #  restart: always
 
-  #bridge-client:
-  #  image: deployment-bridge_client:1.0
-  #  depends_on:
-  #    - kafka
-  #    - kafka-create-topics
-  #  networks:
-  #    - kafka-network
-  #  restart: always
+  bridge-client:
+    image: deployment-bridge_client:1.0
+    depends_on:
+      - kafka
+      - kafka-create-topics
+    networks:
+      - kafka-network
+    restart: always
 
 # Only use external network in development environment
 networks:
