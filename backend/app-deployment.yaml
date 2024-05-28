@@ -21,7 +21,8 @@ spec:
       containers:
         - env:
             - name: PORT
-          image: registry.deti/egs-fuellink/backend
+          image: registry.deti/egs-fuellink/backend:v3
+          imagePullPolicy: Always
           name: nest-docker-postgres
           ports:
             - containerPort: 4200

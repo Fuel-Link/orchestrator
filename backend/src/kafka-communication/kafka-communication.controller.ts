@@ -11,6 +11,12 @@ export class KafkaCommunicationController {
         return this.kafkaService.findAll();
     }
 
+    @Get('/last')
+    async findLast(): Promise<{ plate: string | null }> {
+        const plate = await this.kafkaService.findLastMovementPlate();
+        return { plate }; 
+    }
+
     @Post()
     async create(@Body() comm: KafkaCommunication): Promise<KafkaCommunication> {
         return this.kafkaService.create(comm);
