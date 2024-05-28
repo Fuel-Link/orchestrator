@@ -139,18 +139,24 @@ export class KafkaCommunicationService {
                                 try {
                                     const { username, hash } = JSON.parse(message.value.toString());
                             
-            
                                     const user = await this.userRepository.findOne({ where: { hash } });
                             
-                                  
                                     const authorization = user ? 1 : 0;
-
+                            
+                                    if (user) {
+                                        // Update the user authorization and timestamp
+                                        user.pumpAuth = authorization.toString();
+                                        user.date = new Date().toISOString();
+                                        await this.userRepository.save(user);
+                                        console.log("Updated user authorization and timestamp:", user);
+                                    }
+                            
                                     const authMessage = {
                                         thingId: "org.eclipse.ditto:9b0ec976-3012-42d8-b9ea-89d8b208ca20",
                                         topic: "org.eclipse.ditto/9b0ec976-3012-42d8-b9ea-89d8b208ca20/things/twin/commands/modify",
                                         path: "/features/authorize_supply/properties/",
-                                        messageId: "{{ uuid() }}", 
-                                        timestamp: new Date().toISOString(), 
+                                        messageId: uuidv4(),  // Use uuidv4 to generate a unique messageId
+                                        timestamp: new Date().toISOString(),
                                         source: "gas-pump",
                                         method: "update",
                                         target: "/features/authorize_supply",
