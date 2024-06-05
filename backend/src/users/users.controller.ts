@@ -1,7 +1,7 @@
 import { Controller, Get, HttpStatus, Query, Post, Body, Req, Headers, Delete } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { AppService } from 'src/app.service';
-import moment from 'moment';
+import * as moment from 'moment';
 import { Request } from 'express';
 
 @Controller('users')

@@ -15,7 +15,7 @@ export class GasPumpService {
     }
 
     async findAll() {
-        return await this.repository.manager.query('Select * from "fuel_movements"');
+        return await this.repository.manager.query('Select * from "gas_pump"');
     }
 
     async save(gasPump: { fuel: string, stock: number, capacity: number, thingId: string }) {
