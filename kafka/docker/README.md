@@ -343,7 +343,7 @@ Taking this information into account, the message format of the data place into 
     "imageId": int,
     "results": results,
     "thingId": String
-}
+}Throughout
 ```
 
 Where `results` is the a list, **not** empty with the data present in the `results` field from the Plate Recognizer.
